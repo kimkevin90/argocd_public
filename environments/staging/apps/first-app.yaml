@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: first-app-prod
+  namespace: argocd
+  # finalizers: - resources-finalizer.argocd.argoproj.io는 ArgoCD 애플리케이션의 종료(Finalization) 과정에서 수행되어야 하는 리소스 정리 작업을 정의합니다.
+  # Kubernetes에서는 리소스를 삭제할 때 해당 리소스와 관련된 종속 리소스들이 제거되는 과정이 있습니다. 이때 종속 리소스들의 삭제 작업이 완료된 후에 리소스의 종료 작업이 진행되어야 합니다. 이를 위해 finalizer를 사용합니다.
+  # resources-finalizer.argocd.argoproj.io는 ArgoCD에서 사용하는 finalizer 이름입니다. 
+  # 이 finalizer는 ArgoCD 애플리케이션이 종료될 때 ArgoCD 자체의 관리 리소스들을 정리하기 위해 사용됩니다. 이 finalizer가 정의되어 있으면, ArgoCD는 애플리케이션을 삭제할 때 해당 애플리케이션에 대한 관리 작업을 마무리하고 자원을 정리합니다.
+  # 즉, resources-finalizer.argocd.argoproj.io는 ArgoCD 애플리케이션의 삭제와 관련된 종료 작업을 수행하기 위해 필요한 finalizer를 나타냅니다.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kimkevin90/argocd_public.git
+    targetRevision: HEAD
+    # path 설정 중요
+    path: environments/staging/first-app
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - Validate=true
+      - CreateNamespace=false
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
